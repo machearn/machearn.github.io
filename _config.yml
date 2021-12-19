@@ -104,3 +104,4 @@ theme: clean-blog
 deploy:
   type: git
   repo: git@github.com:machearn/machearn.github.io.git
+  branch: gh-pages
