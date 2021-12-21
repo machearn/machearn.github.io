@@ -3,12 +3,12 @@
 ## Source: https://github.com/hexojs/hexo/
 
 # Site
-title: Machearn's Tech&Life Node
-subtitle: ''
-description: 'My website to share tech note and life. Happy Coding!!'
+title: Machearn
+subtitle: Machearn's Tech&Life Node
+description: My website to share tech note and life.
 keywords: Computer Science, C/C++, Python, Linux
 author: Machearn
-language: zh-CN
+language: en
 timezone: ''
 
 # URL
@@ -97,7 +97,7 @@ ignore:
 # Extensions
 ## Plugins: https://hexo.io/plugins/
 ## Themes: https://hexo.io/themes/
-theme: clean-blog
+theme: next
 
 # Deployment
 ## Docs: https://hexo.io/docs/one-command-deployment
@@ -105,3 +105,52 @@ deploy:
   type: git
   repo: git@github.com:machearn/machearn.github.io.git
   branch: gh-pages
+
+theme_config:
+  footer:
+    copyright: Machearn
+
+  scheme: Gemini
+
+  pjax: true
+  menu:
+    home: / || fa fa-home
+    tags: /tags/ || fa fa-tags
+    sitemap: /sitemap.xml || fa fa-sitemap
+    categories: /categories/ || fa fa-th
+    archives: /archives/ || fa fa-archive
+  
+
+  avatar:
+    url: https://i.imgur.com/Vs4ir8w.jpg
+    rounded: true
+
+  social:
+    GitHub: https://github.com/machearn || fab fa-github
+    E-Mail: mailto:machearn.n@gmail.com || fa fa-envelope
+
+  codeblock:
+    highlight_theme: solarized
+    copy_button:
+      enable: true
+      show_result: true
+      style: mac
+
+  reading_progress:
+    enable: true
+    position: top
+    color: "#37c6c0"
+    height: 3px
+
+  github_banner:
+    enable: true
+    permalink: https://github.com/machearn
+    title: Follow me on GitHub
+
+  disable_baidu_transformation: true
+  index_with_subtitle: true
+  google_site_verification: "FSli0LLWdxqE3pspqpiEX9fW8sLn5MhV4VHsBXjpNM8"
+
+
+  google_analytics:
+    tracking_id: UA-215744034-1
