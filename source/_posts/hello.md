@@ -1,19 +1,11 @@
 ---
-layout: hello
-title: hello
+layout: post
+title: Hello World
 date: 2021-12-19 15:24:41
-tags:
+tags: 
 ---
 
-# Table of Contents
+大家好，这里是Machearn的个人博客网站。
 
-1.  [Introduction](#orgb2faec4)
-
-Hi everyone!! This is my first article.
-
-
-<a id="orgb2faec4"></a>
-
-# Introduction
-
-I am a programmer. As the title of this website, I will share my Tech notes during learning some new knowledge. By the way, I may share my daily life.
+## 自我介绍
+我是一名程序员，主力语言是python和c++。喜欢研究底层原理

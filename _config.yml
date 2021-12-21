@@ -3,12 +3,12 @@
 ## Source: https://github.com/hexojs/hexo/
 
 # Site
-title: Machearn Tech&Life Node
+title: Machearn's Tech&Life Node
 subtitle: ''
-description: ''
+description: 'My website to share tech note and life. Happy Coding!!'
 keywords: Computer Science, C/C++, Python, Linux
 author: Machearn
-language: en
+language: zh-CN
 timezone: ''
 
 # URL
