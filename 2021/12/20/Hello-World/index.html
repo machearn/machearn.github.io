@@ -51,6 +51,15 @@
 
   <title>Hello World | Machearn</title>
   
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-215744034-1"></script>
+    <script data-pjax>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'UA-215744034-1');
+      }
+    </script>
 
 
 
