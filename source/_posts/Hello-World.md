@@ -1,7 +1,10 @@
 ---
 title: Hello World
 date: 2021-12-20 23:56:27
+categories:
+- Life
 tags:
+- introduction
 ---
 
 大家好，这里是Machearn的个人博客网站。
