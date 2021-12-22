@@ -2,6 +2,15 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://machearn.github.io/2021/12/21/Implement-Python-like-Decorator-with-TMP/</loc>
+    
+    <lastmod>2021-12-22</lastmod>
+    
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
     <loc>https://machearn.github.io/2021/12/20/Hello-World/</loc>
     
     <lastmod>2021-12-21</lastmod>
@@ -31,7 +40,7 @@
 
   <url>
     <loc>https://machearn.github.io/</loc>
-    <lastmod>2021-12-21</lastmod>
+    <lastmod>2021-12-22</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
@@ -39,7 +48,28 @@
   
   <url>
     <loc>https://machearn.github.io/tags/introduction/</loc>
-    <lastmod>2021-12-21</lastmod>
+    <lastmod>2021-12-22</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>https://machearn.github.io/tags/TMP/</loc>
+    <lastmod>2021-12-22</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>https://machearn.github.io/tags/Decorator/</loc>
+    <lastmod>2021-12-22</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>https://machearn.github.io/tags/C-C/</loc>
+    <lastmod>2021-12-22</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
@@ -48,7 +78,21 @@
   
   <url>
     <loc>https://machearn.github.io/categories/Life/</loc>
-    <lastmod>2021-12-21</lastmod>
+    <lastmod>2021-12-22</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>https://machearn.github.io/categories/Programming/</loc>
+    <lastmod>2021-12-22</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>https://machearn.github.io/categories/Programming/C-C/</loc>
+    <lastmod>2021-12-22</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
