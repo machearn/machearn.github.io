@@ -23,20 +23,24 @@
     var CONFIG = {"hostname":"machearn.github.io","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"mac"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
   </script>
 
-  <meta name="description" content="大家好，这里是Machearn的个人博客网站。 自我介绍我是一名程序员，主力语言是python和c++。我以后会在这里更新我学习技术时候总结的Tech Note，也会偶尔在这里分享我的生活日常。就这样，Happy Coding！">
+  <meta name="description" content="背景之前学习 MIT 6.828 的时候，都是在 x86_64 平台上，而且编译用的工具链都是 GNU 的编译工具链。所以即使在使用 Intel CPU 的 MBP 的时候，也都是在虚拟机中进行编译和调试工作。在虚拟机中运行QEMU虚拟机，显得十分笨重。 随着 2021 款 M1pro MBP 的到货，我开始在新 Mac 上搭建工作环境。昨天在一篇博客的评论区，有位内核开发者提到了他利用 dock">
 <meta property="og:type" content="article">
-<meta property="og:title" content="Hello World">
-<meta property="og:url" content="https://machearn.github.io/2021/12/20/Hello-World/index.html">
+<meta property="og:title" content="利用docker在M1 Mac上搭建Kernel交叉编译、调试环境">
+<meta property="og:url" content="https://machearn.github.io/2021/12/21/Cross-Compile-Kernel/index.html">
 <meta property="og:site_name" content="Machearn">
-<meta property="og:description" content="大家好，这里是Machearn的个人博客网站。 自我介绍我是一名程序员，主力语言是python和c++。我以后会在这里更新我学习技术时候总结的Tech Note，也会偶尔在这里分享我的生活日常。就这样，Happy Coding！">
+<meta property="og:description" content="背景之前学习 MIT 6.828 的时候，都是在 x86_64 平台上，而且编译用的工具链都是 GNU 的编译工具链。所以即使在使用 Intel CPU 的 MBP 的时候，也都是在虚拟机中进行编译和调试工作。在虚拟机中运行QEMU虚拟机，显得十分笨重。 随着 2021 款 M1pro MBP 的到货，我开始在新 Mac 上搭建工作环境。昨天在一篇博客的评论区，有位内核开发者提到了他利用 dock">
 <meta property="og:locale" content="en_US">
-<meta property="article:published_time" content="2021-12-21T04:56:27.000Z">
-<meta property="article:modified_time" content="2021-12-21T17:17:16.003Z">
+<meta property="article:published_time" content="2021-12-22T03:36:58.000Z">
+<meta property="article:modified_time" content="2021-12-22T04:57:01.731Z">
 <meta property="article:author" content="Machearn">
-<meta property="article:tag" content="introduction">
+<meta property="article:tag" content="Cross Compile">
+<meta property="article:tag" content="Kernel">
+<meta property="article:tag" content="Docker">
+<meta property="article:tag" content="Apple Silicon">
+<meta property="article:tag" content="QEMU">
 <meta name="twitter:card" content="summary">
 
-<link rel="canonical" href="https://machearn.github.io/2021/12/20/Hello-World/">
+<link rel="canonical" href="https://machearn.github.io/2021/12/21/Cross-Compile-Kernel/">
 
 
 <script id="page-configurations">
@@ -49,7 +53,7 @@
   };
 </script>
 
-  <title>Hello World | Machearn</title>
+  <title>利用docker在M1 Mac上搭建Kernel交叉编译、调试环境 | Machearn</title>
   
     <script async src="https://www.googletagmanager.com/gtag/js?id=UA-215744034-1"></script>
     <script data-pjax>
@@ -182,7 +186,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="https://machearn.github.io/2021/12/20/Hello-World/">
+    <link itemprop="mainEntityOfPage" href="https://machearn.github.io/2021/12/21/Cross-Compile-Kernel/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="https://i.imgur.com/Vs4ir8w.jpg">
@@ -195,7 +199,7 @@
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
-          Hello World
+          利用docker在M1 Mac上搭建Kernel交叉编译、调试环境
         </h1>
 
         <div class="post-meta">
@@ -204,23 +208,21 @@
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">Posted on</span>
+              
 
-              <time title="Created: 2021-12-20 23:56:27" itemprop="dateCreated datePublished" datetime="2021-12-20T23:56:27-05:00">2021-12-20</time>
+              <time title="Created: 2021-12-21 22:36:58 / Modified: 23:57:01" itemprop="dateCreated datePublished" datetime="2021-12-21T22:36:58-05:00">2021-12-21</time>
             </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2021-12-21 12:17:16" itemprop="dateModified" datetime="2021-12-21T12:17:16-05:00">2021-12-21</time>
-              </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="far fa-folder"></i>
               </span>
               <span class="post-meta-item-text">In</span>
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Life/" itemprop="url" rel="index"><span itemprop="name">Life</span></a>
+                  <a href="/categories/Programming/" itemprop="url" rel="index"><span itemprop="name">Programming</span></a>
+                </span>
+                  , 
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Programming/Environment/" itemprop="url" rel="index"><span itemprop="name">Environment</span></a>
                 </span>
             </span>
 
@@ -235,8 +237,33 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <p>大家好，这里是Machearn的个人博客网站。</p>
-<h2 id="自我介绍"><a href="#自我介绍" class="headerlink" title="自我介绍"></a>自我介绍</h2><p>我是一名程序员，主力语言是python和c++。我以后会在这里更新我学习技术时候总结的Tech Note，也会偶尔在这里分享我的生活日常。就这样，Happy Coding！</p>
+        <h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>之前学习 MIT 6.828 的时候，都是在 x86_64 平台上，而且编译用的工具链都是 GNU 的编译工具链。所以即使在使用 Intel CPU 的 MBP 的时候，也都是在虚拟机中进行编译和调试工作。在虚拟机中运行QEMU虚拟机，显得十分笨重。</p>
+<p>随着 2021 款 M1pro MBP 的到货，我开始在新 Mac 上搭建工作环境。昨天在一篇博客的评论区，有位内核开发者提到了他利用 docker 在M1 MacBook Air 上搭建内核开发工作流。这个评论给了我灵感，当即决定也尝试着建立自己的交叉编译和调试的内核开发环境。</p>
+<p>我的开发环境由 docker 镜像和本地 QEMU 两部分组成。Docker 镜像负责编译和调试内核代码，本地 QEMU 运行编译好的内核。</p>
+<h2 id="Docker环境"><a href="#Docker环境" class="headerlink" title="Docker环境"></a>Docker环境</h2><p>Docker 容器支持本地目录挂载到镜像的文件系统，所以我们可以在启动镜像的时候挂载内核代码目录，然后使用容器中的 gcc 编译内核代码。同时，由于宿主机使用的 CPU 是 ARM 架构，所以需要在运行 docker 镜像时使用 <code>--platform linux/amd64</code> 指定镜像的版本，即 x86_64 架构的 Linux。下面是具体的命令</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker run --rm -it --platform linux/amd64 -it -v /path/to/code:/mount/path image_name /bin/bash</span><br></pre></td></tr></table></figure>
+<p>其中 <code>-v /path/to/code:/mount/path</code> 就是指定挂载的源路径和目标路径。其他的参数可以通过 <code>docker --help</code> 来查看含义和用法。</p>
+<p>由于指令过长，不便记忆，可以在 shell 的配置文件中编写一个函数。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="title">amd64gcc</span></span>() &#123;</span><br><span class="line">    docker run --rm -it --platform linux/amd64 -it -v <span class="variable">$1</span>:<span class="variable">$2</span> image_name /bin/bash</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>然后，就可以通过 <code>amd64gcc /path/to/code /mount/path</code> 来执行之前的指令了。</p>
+<h2 id="编译调试"><a href="#编译调试" class="headerlink" title="编译调试"></a>编译调试</h2><h3 id="编译"><a href="#编译" class="headerlink" title="编译"></a>编译</h3><p>docker 部署好后，就可以进行编译和调试了。这里使用 xv6 代码来进行演示。xv6 已经写好了 makefile 定义了一些 target。在容器中执行 <code>make</code> 就能完成编译。但是，makefile 中定义的将内核加载进 QEMU 执行的 target，也是带着编译目标的，比如</p>
+<figure class="highlight makefile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">qemu-nox: fs.img xv6.img</span></span><br><span class="line">        <span class="variable">$(QEMU)</span> -nographic <span class="variable">$(QEMUOPTS)</span></span><br></pre></td></tr></table></figure>
+<p>这个 target，在执行 QEMU 之前，还需要编译，这样我们在宿主机上使用 <code>make qemu-nox</code> 执行这个 target 的时候，make 就会先进行编译。然后编译器就会报错，因为内核代码里面有很多 x86_64 的汇编代码，无法通过编译。所以我把这个 target 修改成</p>
+<figure class="highlight makefile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">qemu-nox:</span></span><br><span class="line">        <span class="variable">$(QEMU)</span> -nographic <span class="variable">$(QEMUOPTS)</span></span><br></pre></td></tr></table></figure>
+<p>这样就只执行，不编译了。因为 makefile 中，target 的第一行就是指定编译的目标文件，当我们把它去掉后，就去掉了编译过程。</p>
+<h3 id="调试"><a href="#调试" class="headerlink" title="调试"></a>调试</h3><p>xv6 使用了 gdbinit 来设置 gdb 的调试参数，使用了 <code>gdbinit.tmpl</code> 来协助配置文件的生成。下面这两条就是配置文件生成相关的 makefile 语句</p>
+<figure class="highlight makefile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 用来生成唯一的端口号</span></span><br><span class="line">GDBPORT = <span class="variable">$(<span class="built_in">shell</span> expr `id -u` % 5000 + 25000)</span></span><br><span class="line"><span class="comment"># 用来生成 gdbinit</span></span><br><span class="line"><span class="section">.gdbinit: .gdbinit.tmpl</span></span><br><span class="line">        sed <span class="string">&quot;s/localhost:1234/localhost:<span class="variable">$(GDBPORT)</span>/&quot;</span> &lt; <span class="variable">$^</span> &gt; <span class="variable">$@</span></span><br></pre></td></tr></table></figure>
+<p>注意到，第二条语句中，使用的是 localhost 域名，但是我们的 QEMU 运行在宿主机上，所以要进行修改。<br>首先是将 gdbinit.tmpl 中的这两行</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">echo + target remote localhost:1234\n</span><br><span class="line">target remote localhost:1234</span><br></pre></td></tr></table></figure>
+<p>改成</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">echo + target remote host.docker.internal:1234\n</span><br><span class="line">target remote host.docker.internal:1234</span><br></pre></td></tr></table></figure>
+<p>然后把前面第二条语句改成</p>
+<figure class="highlight makefile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">.gdbinit: .gdbinit.tmpl</span></span><br><span class="line">        sed <span class="string">&quot;s/host.docker.internal:1234/host.docker.internal:<span class="variable">$(GDBPORT)</span>/&quot;</span> &lt; <span class="variable">$^</span> &gt; <span class="variable">$@</span></span><br></pre></td></tr></table></figure>
+<p>makefile 中还有个 target，规定了调试的构建过程</p>
+<figure class="highlight makefile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">qemu-gdb: fs.img xv6.img .gdbinit</span></span><br><span class="line">        @echo <span class="string">&quot;*** Now run &#x27;gdb&#x27;.&quot;</span> 1&gt;&amp;2</span><br><span class="line">        <span class="variable">$(QEMU)</span> -serial mon:stdio <span class="variable">$(QEMUOPTS)</span> -S <span class="variable">$(QEMUGDB)</span></span><br></pre></td></tr></table></figure>
+<p>这个 target 同样含有构建对象，所以同样需要删除第一行的三个构建目标对象。然后依次执行</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># docker 容器</span></span><br><span class="line">make .gdbinit</span><br><span class="line"><span class="comment"># 宿主机</span></span><br><span class="line">qemu-gdb</span><br><span class="line"><span class="comment"># docker 容器</span></span><br><span class="line">gdb -n -x .gdbinit</span><br></pre></td></tr></table></figure>
+<p>现在，就能使用 gdb 进行调试啦。</p>
 
     </div>
 
@@ -246,7 +273,11 @@
 
       <footer class="post-footer">
           <div class="post-tags">
-              <a href="/tags/introduction/" rel="tag"># introduction</a>
+              <a href="/tags/Cross-Compile/" rel="tag"># Cross Compile</a>
+              <a href="/tags/Kernel/" rel="tag"># Kernel</a>
+              <a href="/tags/Docker/" rel="tag"># Docker</a>
+              <a href="/tags/Apple-Silicon/" rel="tag"># Apple Silicon</a>
+              <a href="/tags/QEMU/" rel="tag"># QEMU</a>
           </div>
 
         
@@ -254,11 +285,11 @@
 
         
     <div class="post-nav">
-      <div class="post-nav-item"></div>
       <div class="post-nav-item">
-    <a href="/2021/12/21/Implement-Python-like-Decorator-with-TMP/" rel="next" title="C++使用模板元编程实现RPC函数生成器">
-      C++使用模板元编程实现RPC函数生成器 <i class="fa fa-chevron-right"></i>
+    <a href="/2021/12/21/Implement-Python-like-Decorator-with-TMP/" rel="prev" title="C++使用模板元编程实现RPC函数生成器">
+      <i class="fa fa-chevron-left"></i> C++使用模板元编程实现RPC函数生成器
     </a></div>
+      <div class="post-nav-item"></div>
     </div>
       </footer>
     
@@ -317,7 +348,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%87%AA%E6%88%91%E4%BB%8B%E7%BB%8D"><span class="nav-number">1.</span> <span class="nav-text">自我介绍</span></a></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%83%8C%E6%99%AF"><span class="nav-number">1.</span> <span class="nav-text">背景</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Docker%E7%8E%AF%E5%A2%83"><span class="nav-number">2.</span> <span class="nav-text">Docker环境</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BC%96%E8%AF%91%E8%B0%83%E8%AF%95"><span class="nav-number">3.</span> <span class="nav-text">编译调试</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BC%96%E8%AF%91"><span class="nav-number">3.1.</span> <span class="nav-text">编译</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%B0%83%E8%AF%95"><span class="nav-number">3.2.</span> <span class="nav-text">调试</span></a></li></ol></li></ol></div>
       </div>
       <!--/noindex-->
 
