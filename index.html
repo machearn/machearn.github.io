@@ -202,10 +202,16 @@
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">Posted on</span>
-              
 
-              <time title="Created: 2021-12-21 22:36:58 / Modified: 23:57:01" itemprop="dateCreated datePublished" datetime="2021-12-21T22:36:58-05:00">2021-12-21</time>
+              <time title="Created: 2021-12-21 22:36:58" itemprop="dateCreated datePublished" datetime="2021-12-21T22:36:58-05:00">2021-12-21</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2021-12-23 18:55:36" itemprop="dateModified" datetime="2021-12-23T18:55:36-05:00">2021-12-23</time>
+              </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="far fa-folder"></i>
@@ -234,31 +240,14 @@
           <h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>之前学习 MIT 6.828 的时候，都是在 x86_64 平台上，而且编译用的工具链都是 GNU 的编译工具链。所以即使在使用 Intel CPU 的 MBP 的时候，也都是在虚拟机中进行编译和调试工作。在虚拟机中运行QEMU虚拟机，显得十分笨重。</p>
 <p>随着 2021 款 M1pro MBP 的到货，我开始在新 Mac 上搭建工作环境。昨天在一篇博客的评论区，有位内核开发者提到了他利用 docker 在M1 MacBook Air 上搭建内核开发工作流。这个评论给了我灵感，当即决定也尝试着建立自己的交叉编译和调试的内核开发环境。</p>
 <p>我的开发环境由 docker 镜像和本地 QEMU 两部分组成。Docker 镜像负责编译和调试内核代码，本地 QEMU 运行编译好的内核。</p>
-<h2 id="Docker环境"><a href="#Docker环境" class="headerlink" title="Docker环境"></a>Docker环境</h2><p>Docker 容器支持本地目录挂载到镜像的文件系统，所以我们可以在启动镜像的时候挂载内核代码目录，然后使用容器中的 gcc 编译内核代码。同时，由于宿主机使用的 CPU 是 ARM 架构，所以需要在运行 docker 镜像时使用 <code>--platform linux/amd64</code> 指定镜像的版本，即 x86_64 架构的 Linux。下面是具体的命令</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker run --rm -it --platform linux/amd64 -it -v /path/to/code:/mount/path image_name /bin/bash</span><br></pre></td></tr></table></figure>
-<p>其中 <code>-v /path/to/code:/mount/path</code> 就是指定挂载的源路径和目标路径。其他的参数可以通过 <code>docker --help</code> 来查看含义和用法。</p>
-<p>由于指令过长，不便记忆，可以在 shell 的配置文件中编写一个函数。</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="title">amd64gcc</span></span>() &#123;</span><br><span class="line">    docker run --rm -it --platform linux/amd64 -it -v <span class="variable">$1</span>:<span class="variable">$2</span> image_name /bin/bash</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>然后，就可以通过 <code>amd64gcc /path/to/code /mount/path</code> 来执行之前的指令了。</p>
-<h2 id="编译调试"><a href="#编译调试" class="headerlink" title="编译调试"></a>编译调试</h2><h3 id="编译"><a href="#编译" class="headerlink" title="编译"></a>编译</h3><p>docker 部署好后，就可以进行编译和调试了。这里使用 xv6 代码来进行演示。xv6 已经写好了 makefile 定义了一些 target。在容器中执行 <code>make</code> 就能完成编译。但是，makefile 中定义的将内核加载进 QEMU 执行的 target，也是带着编译目标的，比如</p>
-<figure class="highlight makefile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">qemu-nox: fs.img xv6.img</span></span><br><span class="line">        <span class="variable">$(QEMU)</span> -nographic <span class="variable">$(QEMUOPTS)</span></span><br></pre></td></tr></table></figure>
-<p>这个 target，在执行 QEMU 之前，还需要编译，这样我们在宿主机上使用 <code>make qemu-nox</code> 执行这个 target 的时候，make 就会先进行编译。然后编译器就会报错，因为内核代码里面有很多 x86_64 的汇编代码，无法通过编译。所以我把这个 target 修改成</p>
-<figure class="highlight makefile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">qemu-nox:</span></span><br><span class="line">        <span class="variable">$(QEMU)</span> -nographic <span class="variable">$(QEMUOPTS)</span></span><br></pre></td></tr></table></figure>
-<p>这样就只执行，不编译了。因为 makefile 中，target 的第一行就是指定编译的目标文件，当我们把它去掉后，就去掉了编译过程。</p>
-<h3 id="调试"><a href="#调试" class="headerlink" title="调试"></a>调试</h3><p>xv6 使用了 gdbinit 来设置 gdb 的调试参数，使用了 <code>gdbinit.tmpl</code> 来协助配置文件的生成。下面这两条就是配置文件生成相关的 makefile 语句</p>
-<figure class="highlight makefile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 用来生成唯一的端口号</span></span><br><span class="line">GDBPORT = <span class="variable">$(<span class="built_in">shell</span> expr `id -u` % 5000 + 25000)</span></span><br><span class="line"><span class="comment"># 用来生成 gdbinit</span></span><br><span class="line"><span class="section">.gdbinit: .gdbinit.tmpl</span></span><br><span class="line">        sed <span class="string">&quot;s/localhost:1234/localhost:<span class="variable">$(GDBPORT)</span>/&quot;</span> &lt; <span class="variable">$^</span> &gt; <span class="variable">$@</span></span><br></pre></td></tr></table></figure>
-<p>注意到，第二条语句中，使用的是 localhost 域名，但是我们的 QEMU 运行在宿主机上，所以要进行修改。<br>首先是将 gdbinit.tmpl 中的这两行</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">echo + target remote localhost:1234\n</span><br><span class="line">target remote localhost:1234</span><br></pre></td></tr></table></figure>
-<p>改成</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">echo + target remote host.docker.internal:1234\n</span><br><span class="line">target remote host.docker.internal:1234</span><br></pre></td></tr></table></figure>
-<p>然后把前面第二条语句改成</p>
-<figure class="highlight makefile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">.gdbinit: .gdbinit.tmpl</span></span><br><span class="line">        sed <span class="string">&quot;s/host.docker.internal:1234/host.docker.internal:<span class="variable">$(GDBPORT)</span>/&quot;</span> &lt; <span class="variable">$^</span> &gt; <span class="variable">$@</span></span><br></pre></td></tr></table></figure>
-<p>makefile 中还有个 target，规定了调试的构建过程</p>
-<figure class="highlight makefile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">qemu-gdb: fs.img xv6.img .gdbinit</span></span><br><span class="line">        @echo <span class="string">&quot;*** Now run &#x27;gdb&#x27;.&quot;</span> 1&gt;&amp;2</span><br><span class="line">        <span class="variable">$(QEMU)</span> -serial mon:stdio <span class="variable">$(QEMUOPTS)</span> -S <span class="variable">$(QEMUGDB)</span></span><br></pre></td></tr></table></figure>
-<p>这个 target 同样含有构建对象，所以同样需要删除第一行的三个构建目标对象。然后依次执行</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># docker 容器</span></span><br><span class="line">make .gdbinit</span><br><span class="line"><span class="comment"># 宿主机</span></span><br><span class="line">qemu-gdb</span><br><span class="line"><span class="comment"># docker 容器</span></span><br><span class="line">gdb -n -x .gdbinit</span><br></pre></td></tr></table></figure>
-<p>现在，就能使用 gdb 进行调试啦。</p>
-
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2021/12/21/Cross-Compile-Kernel/#more" rel="contents">
+                Read more &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
       
     </div>
 
@@ -300,10 +289,16 @@
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">Posted on</span>
-              
 
-              <time title="Created: 2021-12-21 13:33:13 / Modified: 19:06:37" itemprop="dateCreated datePublished" datetime="2021-12-21T13:33:13-05:00">2021-12-21</time>
+              <time title="Created: 2021-12-21 13:33:13" itemprop="dateCreated datePublished" datetime="2021-12-21T13:33:13-05:00">2021-12-21</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2021-12-23 18:55:33" itemprop="dateModified" datetime="2021-12-23T18:55:33-05:00">2021-12-23</time>
+              </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="far fa-folder"></i>
@@ -330,107 +325,14 @@
 
       
           <h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>最近在用C++实现一个RPC框架。RPC全称远程过程调用，也就是说在客户端调用远端服务器的过程，但是客户端并觉察不到，一切都表现得像是本地调用。实现这一特性，需要用到 AOP（面向切面编程），生成一个包装过的函数。Python 的函数装饰器本质上就是一个函数的工厂函数，来生产函数对象。所以准备用 C++ 来模拟 Python 的函数装饰器。</p>
-<h2 id="Python装饰器"><a href="#Python装饰器" class="headerlink" title="Python装饰器"></a>Python装饰器</h2><p>我对Python装饰器本质的理解，就是一个可调用对象。该可调用对象接受需要装饰的函数作为参数，然后返回一个闭包。这个返回的闭包，为原函数装饰了一些额外的功能，所以叫装饰器。我们来看一个简单的例子。</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">decorator</span>(<span class="params">func</span>):</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">warpper</span>(<span class="params">*args</span>):</span></span><br><span class="line">        <span class="built_in">print</span>(<span class="string">&quot;before calling&quot;</span>)</span><br><span class="line">        ret = func(*args)</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">&quot;after calling&quot;</span>)</span><br><span class="line">        <span class="keyword">return</span> ret</span><br><span class="line">    <span class="keyword">return</span> warpper</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">foo</span>(<span class="params">a, b</span>):</span></span><br><span class="line">    <span class="keyword">return</span> a+b</span><br><span class="line"></span><br><span class="line">foo = decorator(foo)</span><br></pre></td></tr></table></figure>
-<p>这段示例代码中的 <code>decorator</code> 就是我们的装饰器，<code>foo</code> 就是被装饰的原函数。<code>decorator</code> 返回的闭包 <code>warpper</code> 包装了两个打印的额外操作，同时执行被装饰函数。这里要提一下，在Python中，一切都是对象。比如Python的函数，在Python解释器解释完函数定义的代码后，解释器就会在运行时环境中生成一个函数对象，所以在Python中，函数能很自然作为得参数传入。最后一行代码执行之后，<code>foo</code> 这个变量就和装饰器返回的闭包绑定了，所以调用<code>foo</code>就相当于调用 <code>warpper</code>，从而实现了面向切面编程。</p>
-<p>不过，这种写法看上去不那么优雅。于是，Python 提供了一个语法糖 <code>@decorator</code>，让函数在定义的同时被装饰，使代码更加直观。</p>
-<h2 id="TMP"><a href="#TMP" class="headerlink" title="TMP"></a>TMP</h2><p>C++ 在 C++11 的时候，加入了模板来支持泛型，C++ 的模板在编译过程中将模板代码特化成相应类型的静态代码，从而给 C++ 加入了元编程的特性。使用模板元编程，能够让静态的C++实现一些动态语言的特性，当然实现看上去很丑陋。</p>
-<h3 id="SFINAE"><a href="#SFINAE" class="headerlink" title="SFINAE"></a>SFINAE</h3><p><code>SFINAE</code> 全称 <code>Substitution Failure Is Not An Error</code>，中文翻译成<code>替换失败并非错误</code>。是指当创建重载函数的集合时，有些函数是模板函数。所以在实例化这些模板函数的时候，需要用模板实参来替换模板形参。如果某个实参替换失败，编译器并不会报错，而是继续在集合中寻找合适的重载函数进行实例化。如果在集合中有至少一个重载函数的实参替换成功，就认为函数解析是成功的。Talk is Cheap, Show you my code. 下面来看一下<a target="_blank" rel="noopener" href="https://en.cppreference.com/w/cpp/language/sfinae"> cppreference </a>中的一个简单案例。</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="function"><span class="keyword">auto</span> <span class="title">f</span><span class="params">(<span class="keyword">typename</span> T::B*)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="function"><span class="keyword">auto</span> <span class="title">f</span><span class="params">(T)</span></span>;</span><br><span class="line"></span><br><span class="line">f&lt;<span class="keyword">int</span>&gt;(<span class="number">0</span>);</span><br></pre></td></tr></table></figure>
-<p>在这里，最后一行代码，回使用第二个重载。因为对于第一个重载，要求 <code>T</code> 中有嵌套类型 <code>B*</code>，而 <code>int</code> 没有嵌套类型，出现替换错误，但是编译器并不会因此报错然后停止编译，而是将该函数从集合中移除，然后继续解析剩下的函数。在这里第二个函数替换成功，重载函数候选集合中还剩一个函数，所以编译器认为解析是成功的，也认为在运行时函数调用是良好的。</p>
-<p><code>SFINA</code> 最初引入是为了防止产生不良程序。比如引入的头文件中有一个和自己实现的函数不相关但是同名的函数模板，这个时候，编译器不应该报错，也不应该实例化该不相关的函数从而导致运行时错误。但是，后来人们发现，这个特性可以实现编译期的 <code>introspection</code>，也就是说在编译期判断模板参数是否有特定的性质，比如是否声明了某个类型别名。这个功能，可以用于模板形参包的解包，我们下一节会详细讲述这个用法。</p>
-<h3 id="Parameter-pack"><a href="#Parameter-pack" class="headerlink" title="Parameter pack"></a>Parameter pack</h3><p>因为装饰器需要装饰的函数的形参个数和类型都是不确定的，但是C++是静态语言，需要在编译的时候就确定数据类型。不能像Python那样使用 <code>*args</code> 进行运行时的动态绑定。这时，就要使用 <code>C++11</code> 引入的特性：模板形参包。</p>
-<p>模板形参包允许模板接受零个或多个实参，至少含有一个模板实参的形参包叫做变长模板。模板形参包语法如下：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span>... Args&gt;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">A</span> &#123;</span>&#125;;</span><br><span class="line"></span><br><span class="line">A&lt;<span class="keyword">int</span>, <span class="keyword">float</span>&gt; a&#123;&#125;;</span><br></pre></td></tr></table></figure>
-<p>因为我们的 <code>RPC</code> 需要处理每一个形参，将他们序列化成数据流交给TCP发送给服务器，所以我们装饰器的 <code>wrapper</code> 要对形参包进行解包操做。当然，如果只是调用原函数，可以直接把形参包传给原函数，让编译器的类型计算帮我们解包。下面来分析一下解包的代码。</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span>... Args&gt; <span class="class"><span class="keyword">struct</span> <span class="title">type_list</span>;</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt; <span class="class"><span class="keyword">struct</span> <span class="title">type_list</span>&lt;</span>T&gt; &#123; <span class="keyword">using</span> head = T; &#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> Head, <span class="keyword">typename</span>... Tail&gt;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">type_list</span>&lt;</span>Head, Tail...&gt; : type_list&lt;Head&gt; &#123;</span><br><span class="line">    <span class="keyword">using</span> tail = type_list&lt;Tail...&gt;;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">using</span> args = type_list&lt;Args...&gt;;</span><br></pre></td></tr></table></figure>
-<p>这段代码参考了 <code>Lisp</code> 的列表，递归定义了参数列表。注意最后一行代码，如果形参包至少有两个实参，那么就会匹配第三个定义，这时形参包的头就被解析出来了，同时声明类型别名 <code>tail</code> 表示剩下的形参包，直到形参包还剩最后一个形参时，就会匹配第二个定义，递归结束。</p>
-<p>下面这些代码是一些辅助函数，用来计算参数列表大小。<code>std::integral_constant</code> 包装了一个编译期常量。<code>count</code> 继承他，就能获取参数列表的大小。<code>std::conditional_t&lt;condition, if_true, if_false&gt;</code> 有点类似C++的三目运算符，如果 <code>condition</code> 为真，则返回 <code>if_true</code> 对应的模板实参，否则返回 <code>if_false</code> 对应的模板实参。提一下，<code>std::conditional_t</code> 是 <code>C++14</code> 的特性，<code>std::conditional</code> 是 <code>C++11</code> 的特性。</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// calculate size of type list</span></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span>... Args&gt; <span class="class"><span class="keyword">struct</span> <span class="title">count</span>;</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span>... Args&gt;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">count</span>&lt;</span>type_list&lt;Args...&gt;&gt;</span><br><span class="line">    : std::integral_constant&lt;std::<span class="keyword">size_t</span>, <span class="keyword">sizeof</span>...(Args)&gt; &#123;&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// check wheather has tail</span></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> ArgTypeList&gt;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">has_tail</span> :</span> std::<span class="keyword">conditional_t</span>&lt;(count&lt;ArgTypeList&gt;::value &gt; <span class="number">1</span>),</span><br><span class="line">                                     std::true_type, std::false_type&gt; &#123;&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// check wheather empty list</span></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> ArgTypeList&gt;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">empty_list</span> :</span> std::<span class="keyword">conditional_t</span>&lt;(count&lt;ArgTypeList&gt;::value == <span class="number">0</span>),</span><br><span class="line">                                       std::true_type, std::false_type&gt; &#123;&#125;;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-
-<h2 id="代码"><a href="#代码" class="headerlink" title="代码"></a>代码</h2><p>准备知识都已经梳理完了，可以实现我们的装饰器了。</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> Reply, <span class="keyword">typename</span>... Args&gt;</span><br><span class="line"><span class="function"><span class="keyword">auto</span> <span class="title">decorator</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">auto</span> wrapper = [](Args&amp;&amp;... args) &#123;</span><br><span class="line">        Handler&lt;Args...&gt;::<span class="built_in">handle</span>(args...);</span><br><span class="line">        Reply reply = <span class="number">0</span>;</span><br><span class="line">        <span class="keyword">return</span> reply;</span><br><span class="line">    &#125;;</span><br><span class="line">    <span class="keyword">return</span> wrapper;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">using</span> <span class="keyword">add_t</span> = std::function&lt;<span class="built_in"><span class="keyword">int</span></span>(<span class="keyword">int</span>, <span class="keyword">int</span>)&gt;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">add_t</span> add = decorator&lt;<span class="keyword">int</span>, <span class="keyword">int</span>, <span class="keyword">int</span>&gt;();</span><br></pre></td></tr></table></figure>
-<p>由于RPC客户端调用的函数本身不需要执行任何操作，所以不需要像 Python 的装饰器那样接受一个函数作为对象，但是基本思想和设计哲学类似。</p>
-<p><code>Handle</code> 是函数需要真正执行的代码，包括网络操作和序列化。这里只贴与元编程相关的代码。</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span>... Args&gt;</span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Handler</span> &#123;</span></span><br><span class="line">    <span class="keyword">template</span> &lt;<span class="keyword">typename</span> ArgTypeList, <span class="keyword">bool</span> HasTail, <span class="keyword">bool</span> Empty, <span class="keyword">typename</span>... ArgList&gt;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">handle_impl</span>;</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// Case 1: has tail</span></span><br><span class="line">    <span class="keyword">template</span> &lt;<span class="keyword">typename</span> ArgTypeList, <span class="keyword">typename</span> Head, <span class="keyword">typename</span>... Tail&gt;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">handle_impl</span>&lt;</span>ArgTypeList, <span class="literal">true</span>, <span class="literal">false</span>, Head, Tail...&gt; &#123;</span><br><span class="line">        <span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">call</span><span class="params">(Head &amp;head, Tail &amp;... tail)</span> </span>&#123;</span><br><span class="line">            <span class="built_in">actual_for_args</span>(head);</span><br><span class="line"></span><br><span class="line">            <span class="keyword">using</span> ArgTypeListTail = <span class="keyword">typename</span> ArgTypeList::tail;</span><br><span class="line"></span><br><span class="line">            <span class="keyword">constexpr</span> <span class="keyword">bool</span> has_tail_v = has_tail&lt;ArgTypeListTail&gt;::value;</span><br><span class="line">            <span class="keyword">constexpr</span> <span class="keyword">bool</span> empty_list_v = empty_list&lt;ArgTypeListTail&gt;::value;</span><br><span class="line"></span><br><span class="line">            handle_impl&lt;ArgTypeListTail, has_tail_v, empty_list_v, Tail...&gt;::<span class="built_in">call</span>(tail...);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Case 2: no tail, not empty</span></span><br><span class="line">    <span class="keyword">template</span> &lt;<span class="keyword">typename</span> ArgTypeList, <span class="keyword">typename</span> Head&gt;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">handle_impl</span>&lt;</span>ArgTypeList, <span class="literal">false</span>, <span class="literal">false</span>, Head&gt; &#123;</span><br><span class="line">        <span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">call</span><span class="params">(Head &amp;head)</span> </span>&#123; <span class="built_in">actual_for_args</span>(head); &#125;</span><br><span class="line">    &#125;;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Case 3: empty</span></span><br><span class="line">    <span class="keyword">template</span> &lt;<span class="keyword">typename</span> ArgTypeList&gt; <span class="class"><span class="keyword">struct</span> <span class="title">handle_impl</span>&lt;</span>ArgTypeList, <span class="literal">false</span>, <span class="literal">true</span>&gt; &#123;</span><br><span class="line">        <span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">call</span><span class="params">()</span> </span>&#123; <span class="built_in">actual_for_void</span>(); &#125;</span><br><span class="line">    &#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="keyword">static</span> <span class="keyword">auto</span> <span class="title">handle</span><span class="params">(Args &amp;... args)</span> </span>&#123;</span><br><span class="line">        args_json = std::make_unique&lt;std::string&gt;();</span><br><span class="line">        <span class="keyword">using</span> ArgTypeList = type_list&lt;Args...&gt;;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">constexpr</span> <span class="keyword">bool</span> has_tail_v = has_tail&lt;ArgTypeList&gt;::value;</span><br><span class="line">        <span class="keyword">constexpr</span> <span class="keyword">bool</span> empty_list_v = empty_list&lt;ArgTypeList&gt;::value;</span><br><span class="line"></span><br><span class="line">        handle_impl&lt;ArgTypeList, has_tail_v, empty_list_v, Args...&gt;::<span class="built_in">call</span>(args...);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> std::<span class="built_in">move</span>(args_json);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<p><code>handle_impl</code> 重载函数集合总共有三个函数，分别对应 <code>type_list</code> 长度大于1，长度等于1和长度等于0，编译器会根据传入的模板实参来匹配相对应的重载函数。同时，也利用递归调用来对形参包解包。</p>
-<p>最后，打个广告，如前文所说，最近正在施工一个 <code>RPC</code> 框架，这里是<a target="_blank" rel="noopener" href="https://github.com/machearn/rpc"> repo </a>地址，欢迎star，欢迎提issue。</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="https://machearn.github.io/2021/12/20/Hello-World/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="https://i.imgur.com/Vs4ir8w.jpg">
-      <meta itemprop="name" content="Machearn">
-      <meta itemprop="description" content="My website to share tech note and life.">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Machearn">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2021/12/20/Hello-World/" class="post-title-link" itemprop="url">Hello World</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2021-12-20 23:56:27" itemprop="dateCreated datePublished" datetime="2021-12-20T23:56:27-05:00">2021-12-20</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2021-12-21 12:17:16" itemprop="dateModified" datetime="2021-12-21T12:17:16-05:00">2021-12-21</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Life/" itemprop="url" rel="index"><span itemprop="name">Life</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>大家好，这里是Machearn的个人博客网站。</p>
-<h2 id="自我介绍"><a href="#自我介绍" class="headerlink" title="自我介绍"></a>自我介绍</h2><p>我是一名程序员，主力语言是python和c++。我以后会在这里更新我学习技术时候总结的Tech Note，也会偶尔在这里分享我的生活日常。就这样，Happy Coding！</p>
-
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2021/12/21/Implement-Python-like-Decorator-with-TMP/#more" rel="contents">
+                Read more &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
       
     </div>
 
@@ -513,20 +415,20 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">3</span>
+          <span class="site-state-item-count">2</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
             <a href="/categories/">
           
-        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-count">3</span>
         <span class="site-state-item-name">categories</span></a>
       </div>
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">9</span>
+        <span class="site-state-item-count">8</span>
         <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>

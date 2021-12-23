@@ -23,15 +23,15 @@
     var CONFIG = {"hostname":"machearn.github.io","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"mac"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
   </script>
 
-  <meta name="description" content="背景最近在用C++实现一个RPC框架。RPC全称远程过程调用，也就是说在客户端调用远端服务器的过程，但是客户端并觉察不到，一切都表现得像是本地调用。实现这一特性，需要用到 AOP（面向切面编程），生成一个包装过的函数。Python 的函数装饰器本质上就是一个函数的工厂函数，来生产函数对象。所以准备用 C++ 来模拟 Python 的函数装饰器。 Python装饰器我对Python装饰器本质的理解，">
+  <meta name="description" content="背景最近在用C++实现一个RPC框架。RPC全称远程过程调用，也就是说在客户端调用远端服务器的过程，但是客户端并觉察不到，一切都表现得像是本地调用。实现这一特性，需要用到 AOP（面向切面编程），生成一个包装过的函数。Python 的函数装饰器本质上就是一个函数的工厂函数，来生产函数对象。所以准备用 C++ 来模拟 Python 的函数装饰器。">
 <meta property="og:type" content="article">
 <meta property="og:title" content="C++使用模板元编程实现RPC函数生成器">
 <meta property="og:url" content="https://machearn.github.io/2021/12/21/Implement-Python-like-Decorator-with-TMP/index.html">
 <meta property="og:site_name" content="Machearn">
-<meta property="og:description" content="背景最近在用C++实现一个RPC框架。RPC全称远程过程调用，也就是说在客户端调用远端服务器的过程，但是客户端并觉察不到，一切都表现得像是本地调用。实现这一特性，需要用到 AOP（面向切面编程），生成一个包装过的函数。Python 的函数装饰器本质上就是一个函数的工厂函数，来生产函数对象。所以准备用 C++ 来模拟 Python 的函数装饰器。 Python装饰器我对Python装饰器本质的理解，">
+<meta property="og:description" content="背景最近在用C++实现一个RPC框架。RPC全称远程过程调用，也就是说在客户端调用远端服务器的过程，但是客户端并觉察不到，一切都表现得像是本地调用。实现这一特性，需要用到 AOP（面向切面编程），生成一个包装过的函数。Python 的函数装饰器本质上就是一个函数的工厂函数，来生产函数对象。所以准备用 C++ 来模拟 Python 的函数装饰器。">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2021-12-21T18:33:13.000Z">
-<meta property="article:modified_time" content="2021-12-22T00:06:37.708Z">
+<meta property="article:modified_time" content="2021-12-23T23:55:33.543Z">
 <meta property="article:author" content="Machearn">
 <meta property="article:tag" content="TMP">
 <meta property="article:tag" content="Decorator">
@@ -206,10 +206,16 @@
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">Posted on</span>
-              
 
-              <time title="Created: 2021-12-21 13:33:13 / Modified: 19:06:37" itemprop="dateCreated datePublished" datetime="2021-12-21T13:33:13-05:00">2021-12-21</time>
+              <time title="Created: 2021-12-21 13:33:13" itemprop="dateCreated datePublished" datetime="2021-12-21T13:33:13-05:00">2021-12-21</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2021-12-23 18:55:33" itemprop="dateModified" datetime="2021-12-23T18:55:33-05:00">2021-12-23</time>
+              </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="far fa-folder"></i>
@@ -236,6 +242,8 @@
 
       
         <h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>最近在用C++实现一个RPC框架。RPC全称远程过程调用，也就是说在客户端调用远端服务器的过程，但是客户端并觉察不到，一切都表现得像是本地调用。实现这一特性，需要用到 AOP（面向切面编程），生成一个包装过的函数。Python 的函数装饰器本质上就是一个函数的工厂函数，来生产函数对象。所以准备用 C++ 来模拟 Python 的函数装饰器。</p>
+<span id="more"></span>
+
 <h2 id="Python装饰器"><a href="#Python装饰器" class="headerlink" title="Python装饰器"></a>Python装饰器</h2><p>我对Python装饰器本质的理解，就是一个可调用对象。该可调用对象接受需要装饰的函数作为参数，然后返回一个闭包。这个返回的闭包，为原函数装饰了一些额外的功能，所以叫装饰器。我们来看一个简单的例子。</p>
 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">decorator</span>(<span class="params">func</span>):</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">warpper</span>(<span class="params">*args</span>):</span></span><br><span class="line">        <span class="built_in">print</span>(<span class="string">&quot;before calling&quot;</span>)</span><br><span class="line">        ret = func(*args)</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">&quot;after calling&quot;</span>)</span><br><span class="line">        <span class="keyword">return</span> ret</span><br><span class="line">    <span class="keyword">return</span> warpper</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">foo</span>(<span class="params">a, b</span>):</span></span><br><span class="line">    <span class="keyword">return</span> a+b</span><br><span class="line"></span><br><span class="line">foo = decorator(foo)</span><br></pre></td></tr></table></figure>
 <p>这段示例代码中的 <code>decorator</code> 就是我们的装饰器，<code>foo</code> 就是被装饰的原函数。<code>decorator</code> 返回的闭包 <code>warpper</code> 包装了两个打印的额外操作，同时执行被装饰函数。这里要提一下，在Python中，一切都是对象。比如Python的函数，在Python解释器解释完函数定义的代码后，解释器就会在运行时环境中生成一个函数对象，所以在Python中，函数能很自然作为得参数传入。最后一行代码执行之后，<code>foo</code> 这个变量就和装饰器返回的闭包绑定了，所以调用<code>foo</code>就相当于调用 <code>warpper</code>，从而实现了面向切面编程。</p>
@@ -280,10 +288,7 @@
 
         
     <div class="post-nav">
-      <div class="post-nav-item">
-    <a href="/2021/12/20/Hello-World/" rel="prev" title="Hello World">
-      <i class="fa fa-chevron-left"></i> Hello World
-    </a></div>
+      <div class="post-nav-item"></div>
       <div class="post-nav-item">
     <a href="/2021/12/21/Cross-Compile-Kernel/" rel="next" title="利用docker在M1 Mac上搭建Kernel交叉编译、调试环境">
       利用docker在M1 Mac上搭建Kernel交叉编译、调试环境 <i class="fa fa-chevron-right"></i>
@@ -362,20 +367,20 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">3</span>
+          <span class="site-state-item-count">2</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
             <a href="/categories/">
           
-        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-count">3</span>
         <span class="site-state-item-name">categories</span></a>
       </div>
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">9</span>
+        <span class="site-state-item-count">8</span>
         <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>
